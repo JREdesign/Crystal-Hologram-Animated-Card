@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carta TCG Épica con Electricidad</title>
+    <style>
+        /* --- Configuración General --- */
+        body {
+            background-color: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            perspective: 1000px;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0a0a0a 100%);
+        }
+
+        /* --- Contenedor Principal (para los rayos externos) --- */
+        .card-wrapper {
+            position: relative;
+            width: 340px;
+            height: 500px;
+        }
+
+        /* --- Contenedor de la Carta --- */
+        .card {
+            width: 320px;
+            height: 480px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border-radius: 15px;
+            transform-style: preserve-3d;
+            will-change: transform;
+            transition: transform 0.1s;
+            cursor: pointer;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.3));
+        }
+
+        /* --- SVG para Rayos Externos --- */
+        .lightning-external {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* --- Imagen de Fondo --- */
+        .card-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 15px;
+            background-image: url('https://images.unsplash.com/photo-1635326444826-0032f283273e?q=80&w=1000&auto=format&fit=crop'); 
+            background-size: cover;
+            background-position: center;
+            border: 8px solid #111;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+            z-index: 1;
+        }
+
+        /* --- Capa de Brillo Holográfico --- */
+        .card-shine {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 12px;
+            z-index: 2;
+            background: linear-gradient(
+                115deg, 
+                transparent 20%, 
+                rgba(255, 0, 150, 0.4) 30%, 
+                rgba(0, 255, 255, 0.4) 45%, 
+                rgba(255, 255, 0, 0.4) 55%, 
+                transparent 70%
+            );
+            background-size: 300% 300%;
+            opacity: 0.6;
+            mix-blend-mode: color-dodge;
+            filter: brightness(1.2) contrast(1.2);
+            pointer-events: none;
+        }
+
+        /* --- Capa de Reflejo Especular --- */
+        .card-glare {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 12px;
+            z-index: 3;
+            background: radial-gradient(
+                farthest-corner circle at var(--pointer-x) var(--pointer-y),
+                rgba(255, 255, 255, 0.8) 5%,
+                rgba(255, 255, 255, 0.4) 20%,
+                rgba(255, 255, 255, 0) 60%
+            );
+            opacity: 0;
+            mix-blend-mode: overlay;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        /* --- Chispas Eléctricas --- */
+        .sparks-container {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .spark {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ffff00;
+            border-radius: 50%;
+            box-shadow: 
+                0 0 8px #ffff00,
+                0 0 15px #ffff00,
+                0 0 20px #00ffff;
+            animation: sparkRise 2s ease-out forwards;
+        }
+
+        @keyframes sparkRise {
+            0% {
+                transform: translateY(0) translateX(0) scale(1);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-480px) translateX(var(--drift)) scale(0.3);
+                opacity: 0;
+            }
+        }
+
+        /* --- Contenido de Texto --- */
+        .card-content {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 6;
+            color: white;
+            transform: translateZ(30px);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+        }
+
+        .card-content h2 { 
+            margin: 0; 
+            font-size: 1.5rem; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+        }
+
+        .card-content p { 
+            margin: 5px 0 0; 
+            font-size: 0.9rem; 
+            opacity: 0.9;
+        }
+
+        /* Activar efectos al hover */
+        .card:hover .card-glare {
+            opacity: 1;
+        }
+
+        .card-wrapper:hover .lightning-external {
+            opacity: 1;
+        }
+
+        .card:hover {
+            filter: drop-shadow(0 0 40px rgba(0, 255, 255, 0.6)) 
+                    drop-shadow(0 0 60px rgba(255, 255, 0, 0.4));
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card-wrapper" id="cardWrapper">
+        <!-- SVG para rayos externos alrededor de la carta -->
+        <svg class="lightning-external" id="lightningExternal" viewBox="0 0 340 500"></svg>
+        
+        <div class="card" id="holoCard">
+            <div class="card-bg"></div>
+            <div class="card-shine"></div>
+            <div class="card-glare"></div>
+            
+            <!-- Contenedor de chispas -->
+            <div class="sparks-container" id="sparks"></div>
+            
+            <div class="card-content">
+                <h2>Cosmic Dragon</h2>
+                <p>Legendary Rare Holo</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const cardWrapper = document.getElementById('cardWrapper');
+        const card = document.getElementById('holoCard');
+        const shine = card.querySelector('.card-shine');
+        const glare = card.querySelector('.card-glare');
+        const svgExternal = document.getElementById('lightningExternal');
+        const sparksContainer = document.getElementById('sparks');
+
+        let lightningInterval;
+        let sparkInterval;
+        let isHovering = false;
+
+        // Generar path de rayo eléctrico desde un borde hacia afuera
+        function generateExternalLightning(side) {
+            const segments = 15;
+            let x1, y1, x2, y2;
+            
+            // Determinar punto de inicio según el lado
+            switch(side) {
+                case 'top':
+                    x1 = 30 + Math.random() * 280;
+                    y1 = 10;
+                    x2 = x1 + (Math.random() - 0.5) * 100;
+                    y2 = -40 - Math.random() * 60;
+                    break;
+                case 'bottom':
+                    x1 = 30 + Math.random() * 280;
+                    y1 = 490;
+                    x2 = x1 + (Math.random() - 0.5) * 100;
+                    y2 = 540 + Math.random() * 60;
+                    break;
+                case 'left':
+                    x1 = 10;
+                    y1 = 30 + Math.random() * 440;
+                    x2 = -40 - Math.random() * 60;
+                    y2 = y1 + (Math.random() - 0.5) * 100;
+                    break;
+                case 'right':
+                    x1 = 330;
+                    y1 = 30 + Math.random() * 440;
+                    x2 = 380 + Math.random() * 60;
+                    y2 = y1 + (Math.random() - 0.5) * 100;
+                    break;
+            }
+            
+            let pathData = `M ${x1} ${y1}`;
+            
+            for (let i = 1; i <= segments; i++) {
+                const progress = i / segments;
+                const x = x1 + (x2 - x1) * progress + (Math.random() - 0.5) * 25;
+                const y = y1 + (y2 - y1) * progress + (Math.random() - 0.5) * 25;
+                pathData += ` L ${x} ${y}`;
+            }
+            
+            return pathData;
+        }
+
+        // Dibujar rayos alrededor de la carta
+        function drawExternalLightning() {
+            svgExternal.innerHTML = '';
+            
+            const sides = ['top', 'bottom', 'left', 'right'];
+            const lightningPerSide = 2;
+            
+            sides.forEach(side => {
+                for (let i = 0; i < lightningPerSide; i++) {
+                    const pathData = generateExternalLightning(side);
+                    
+                    // Rayo exterior (glow)
+                    const pathGlow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    pathGlow.setAttribute('d', pathData);
+                    pathGlow.setAttribute('stroke', '#00ffff');
+                    pathGlow.setAttribute('stroke-width', '5');
+                    pathGlow.setAttribute('fill', 'none');
+                    pathGlow.setAttribute('opacity', '0.5');
+                    pathGlow.setAttribute('stroke-linecap', 'round');
+                    pathGlow.setAttribute('filter', 'blur(3px)');
+                    svgExternal.appendChild(pathGlow);
+                    
+                    // Rayo medio
+                    const pathMid = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    pathMid.setAttribute('d', pathData);
+                    pathMid.setAttribute('stroke', '#ffff00');
+                    pathMid.setAttribute('stroke-width', '2.5');
+                    pathMid.setAttribute('fill', 'none');
+                    pathMid.setAttribute('opacity', '0.9');
+                    pathMid.setAttribute('stroke-linecap', 'round');
+                    svgExternal.appendChild(pathMid);
+                    
+                    // Núcleo brillante
+                    const pathCore = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    pathCore.setAttribute('d', pathData);
+                    pathCore.setAttribute('stroke', '#ffffff');
+                    pathCore.setAttribute('stroke-width', '1');
+                    pathCore.setAttribute('fill', 'none');
+                    pathCore.setAttribute('opacity', '1');
+                    pathCore.setAttribute('stroke-linecap', 'round');
+                    svgExternal.appendChild(pathCore);
+                }
+            });
+        }
+
+        // Crear chispas que suben desde abajo
+        function createSparks() {
+            const sparkCount = 3 + Math.floor(Math.random() * 5);
+            
+            for (let i = 0; i < sparkCount; i++) {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                
+                // Posición inicial en la parte inferior
+                const startX = Math.random() * 320;
+                spark.style.left = startX + 'px';
+                spark.style.bottom = '0px';
+                
+                // Deriva horizontal
+                const drift = (Math.random() - 0.5) * 80;
+                spark.style.setProperty('--drift', drift + 'px');
+                
+                // Delay aleatorio
+                spark.style.animationDelay = Math.random() * 0.3 + 's';
+                
+                sparksContainer.appendChild(spark);
+                
+                // Eliminar después de la animación
+                setTimeout(() => spark.remove(), 2300);
+            }
+        }
+
+        // Eventos de hover
+        cardWrapper.addEventListener('mouseenter', () => {
+            isHovering = true;
+            
+            // Dibujar rayos externos continuamente
+            lightningInterval = setInterval(() => {
+                if (isHovering) {
+                    drawExternalLightning();
+                }
+            }, 100);
+            
+            // Generar chispas continuamente
+            sparkInterval = setInterval(() => {
+                if (isHovering) {
+                    createSparks();
+                }
+            }, 200);
+        });
+
+        cardWrapper.addEventListener('mouseleave', () => {
+            isHovering = false;
+            clearInterval(lightningInterval);
+            clearInterval(sparkInterval);
+            svgExternal.innerHTML = '';
+            sparksContainer.innerHTML = '';
+            card.style.transform = 'rotateX(0) rotateY(0)';
+            shine.style.backgroundPosition = 'center';
+        });
+
+        // Efectos de movimiento 3D
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = ((y - centerY) / centerY) * -15;
+            const rotateY = ((x - centerX) / centerX) * 15;
+
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+
+            const bgPosX = ((x / rect.width) * 100);
+            const bgPosY = ((y / rect.height) * 100);
+            shine.style.backgroundPosition = `${bgPosX}% ${bgPosY}%`;
+
+            card.style.setProperty('--pointer-x', `${x}px`);
+            card.style.setProperty('--pointer-y', `${y}px`);
+        });
+    </script>
+</body>
+</html>
