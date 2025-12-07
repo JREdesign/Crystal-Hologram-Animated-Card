@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TCG Verse - Card Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header class="main-header">
+        <div class="logo-container">
+            <h1>TCG <span class="highlight">VERSE</span></h1>
+            <p>Premium Card Collection</p>
+        </div>
+
+        <nav class="filter-nav">
+            <button class="filter-btn active" data-filter="all">All Cards</button>
+            <button class="filter-btn" data-filter="legendary">Legendary</button>
+            <button class="filter-btn" data-filter="epic">Epic</button>
+            <button class="filter-btn" data-filter="rare">Rare</button>
+        </nav>
+    </header>
+
+    <main>
+        <div class="cards-grid" id="cardsGrid">
+            <!-- Cards will be injected here by JS -->
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
